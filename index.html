@@ -1,11 +1,13 @@
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="google-signin-client_id" content="850305174148-1t3trt6i3af297ong1jnnu10m90omi3g.apps.googleusercontent.com">
 		<script src="lib/jquery.min.js"></script>
 		<script src="lib/knockout-min.js"></script>
 		<script src="lib/seedrandom.js"></script>
 		<script src="lib/squares.js"></script>
 		<script src="lib/moment.min.js"></script>
+		<script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>
 		<style>
 			body { text-align: center; }
 			body.light { font-family: verdana; background-color: lightgray; }
@@ -80,13 +82,33 @@
 						return true;
 					}
 				}
+
+				self.authReady = function() {
+
+				}
+				self.onSignIn = function(googleUser) {
+					var profile = googleUser.getBasicProfile();
+					console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+					console.log('Name: ' + profile.getName());
+					console.log('Image URL: ' + profile.getImageUrl());
+					console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+				}
+				window.onSignIn = self.onSignIn;
 			}
+			gapi_init_ready = false;
 			$(document).ready(function() {
 				squares.assignOrderedColors($('.square:not(.doom)'), 80, 40);
 				squares.applyCSS();
 				window.model = new Model();
 				ko.applyBindings(window.model);
+				if (gapi_init_ready) model.authReady();
 			});
+			function gapi_init() {
+				gapi.load('auth2', function() {
+					gapi_init_ready = true;
+					if (model) model.authReady();
+				});
+			}
 		</script>
 	</head>
 	<body data-bind="event: { keydown: body_keydown }, css: theme">
@@ -94,6 +116,7 @@
 			<div class="pageTitle">Cueable</div>
 			<div class="pageSubtitle">Able to be cued</div>
 		</div>
+		<div class="g-signin2" data-onsuccess="onSignIn"></div>
 		<div class="bottomLinks">
 			<span class="themeToggle linkStyle" data-bind="text: theme() == 'light' ? 'Dark Theme' : 'Light Theme', event: { click: themeToggle_click }"></span>
 		</div>
